@@ -30,7 +30,6 @@ c2=Car()
 c2.color='red'
 c2.color
 
-ob2.color
 
 #Create object s1
 #Assign s1.name = "Alice"

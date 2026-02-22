@@ -1,6 +1,6 @@
 import pandas as pd
 #Load and display basic info (shape, dtypes, head, describe)
-Iris=pd.read_csv('iris.csv')
+Iris=pd.read_csv('C:/Users/gurle/Downloads/Learning Series/Learning Series-2/iris.csv')
 
 #display basic info (shape, dtypes, head, describe)
 Iris.shape

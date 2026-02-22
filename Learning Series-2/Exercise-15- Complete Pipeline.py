@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 
 data = pd.DataFrame({
     'Hours_Studied': [2, 4, 3, 5, None, 6, 1, 4],
@@ -77,7 +78,7 @@ y_pred
 
 #second way
 
-from sklearn.linear_model import LinearRegression
+
 Total_pipeline=Pipeline([('preprocessor',preprocessing),('model',LinearRegression())
      ])
 
