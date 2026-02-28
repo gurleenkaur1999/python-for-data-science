@@ -1,35 +1,55 @@
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 
-data = pd.DataFrame({
-    'Hours_Studied': [2, 4, 3, 5, None, 6, 1, 4],
-    'Sleep_Hours': [7, 6, 8, 5, 6, None, 7, 5],
-    'Gender': ['M', 'F', 'F', 'M', 'F', 'M', 'M', 'F'],
-    'Course': ['Math', 'Science', 'Math', 'History', 'Science', 'Math', 'History', 'Math'],
-    'Exam_Score': [50, 65, 60, 70, 68, 80, 45, 62]
-})
+Titanic= pd.read_csv("C:/users/gurle/Downloads/Learning Series/Learning Series-2/Titanic-Dataset (1).csv")
 
-print(data)
-data.head()
-data.shape
+print(Titanic)
+Titanic.head()
+Titanic.shape
+#891 rows 12 cols
 
-data.isna().sum()
-#total 2 missing values
+Titanic.isna().sum()
+#Age,Cabin, embarked has missing values
 
 
-data.describe()
-data.info()
+Titanic.describe()
+#numeric cols in the data 
+#Passenger ID not a useful column to keep
+#max age of passenger on this ship is 80
+# max fare is 512 
+
+Titanic['Survived'].value_counts()
+#342 passengers survived
+#549 passengers
+
+Titanic['Survived'].value_counts(normalize=True)
+#38% passengers survived
+# 61% of passengers didn't survive
+Titanic[['Pclass','Survived']].value_counts(normalize=True)
+Titanic[['Pclass','Survived']].value_counts()
+
+Titanic.groupby(['Pclass'])['Survived'].value_counts(normalize=True).unstack()
+# highest survival rate on pclass 1
+# medium survival on pclass2
+#lowest survival on pclass 3
+import matplotlib.pyplot as plt
+Titanic['Age'].hist()
+plt.show()
+
+Titanic['Fare'].hist()
+plt.show()
+
 
 #Handles missing values and outliers
 
 from sklearn.model_selection import train_test_split
 
-X= data.drop('Exam_Score',axis=1)
-Y= data['Exam_Score']
+X= Titanic.drop(['PassengerId','Name','Ticket','Cabin','Survived'],axis=1)
+#dropping the variables not required
+Y= Titanic['Survived']
 
 
-
-x_train,x_test,y_train,y_test=train_test_split(X,Y,test_size=0.2)
+x_train,x_test,y_train,y_test=train_test_split(X,Y,test_size=0.2,random_state=86)
 
 #x_train has independend variables
 #y_train has target variable
@@ -48,41 +68,55 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
 
 numeric_pipeline = Pipeline([
-    ('imputer',SimpleImputer(strategy='mean')),
+    ('imputer',SimpleImputer(strategy='median')),
     ('scaling',StandardScaler())])
 
 
 categorical_pipeline = Pipeline([
-('imputer',SimpleImputer(strategy='most_frequent')),
-    ('onehot',OneHotEncoder())])
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot',OneHotEncoder(drop='first'))])
 
 from sklearn.compose import ColumnTransformer
 
 preprocessing = ColumnTransformer([
-    ('numeric',numeric_pipeline,['Hours_Studied','Sleep_Hours']),
-    ('categoric',categorical_pipeline,['Gender','Course'])
+    ('numeric',numeric_pipeline,['Age','Fare']),
+    ('categoric',categorical_pipeline,['Sex','Embarked'])
 ])
-X
-transformed_x= preprocessing.fit_transform(x_train)
 
-linmodel=LinearRegression()
+from sklearn.metrics import mean_squared_error, r2_score
 
-linmodel.fit(transformed_x,y_train)
+from sklearn.neighbors import KNeighborsClassifier
 
-linmodel.coef_
-
-transformed_x_test=preprocessing.transform(x_test)
-
-y_pred=linmodel.predict(transformed_x_test)
-y_pred
-
-#second way
-
-
-Total_pipeline=Pipeline([('preprocessor',preprocessing),('model',LinearRegression())
+Total_pipeline=Pipeline([('preprocessor',preprocessing),('model',LogisticRegression())
      ])
 
-model=Total_pipeline.fit(x_train,y_train)
-#fit here will learn the paramteres and applies the steps on xtraining data and goive it to the model
+param_grid=[
+    {'model': [LogisticRegression()]},
+    {'model':[KNeighborsClassifier()],
+     'model__n_neighbors': [2,3,5]}
+     ]
 
-model.predict(x_test)
+#specifying models to predict target variable
+
+grid= GridSearchCV(Total_pipeline,param_grid,cv=5)
+grid.fit(x_train,y_train)
+#apply transform automatically
+grid.best_estimator_
+#chose logistic regression
+grid_pred=grid.best_estimator_.predict(x_test)
+
+from sklearn.metrics import accuracy_score
+
+accuracy = accuracy_score(y_test, grid_pred)
+#correct predictions/total predictions
+print("Accuracy:", accuracy)
+#78% accuracy
+
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+cm = confusion_matrix(y_test, grid_pred)
+cm
+#False positive should be taken into consideration
+
+
+
